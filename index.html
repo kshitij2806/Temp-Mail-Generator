@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TempMail • Free Temporary Email</title>
+
+    <!-- Content Security Policy - NO unsafe-inline, but Tailwind classes are fine -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
+        style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com;
+        font-src 'self' https://cdnjs.cloudflare.com;
+        img-src 'self' data: https:;
+        connect-src 'self' https://api.mail.tm;
+        frame-src 'none';
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+    "
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+
+    <style>
+      /* Custom styles that can't be done with Tailwind */
+      .email-content {
+        max-height: 70vh;
+        overflow-y: auto;
+      }
+      .fade-in {
+        animation: fadeIn 0.5s;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Smooth transitions */
+      * {
+        transition: background-color 0.3s ease, border-color 0.3s ease,
+          color 0.3s ease;
+      }
+
+      /* Dark mode custom scrollbar */
+      .dark ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+
+      .dark ::-webkit-scrollbar-track {
+        background: #2d3748;
+      }
+
+      .dark ::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 5px;
+      }
+
+      .dark ::-webkit-scrollbar-thumb:hover {
+        background: #718096;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+      <!-- Header with Dark Mode Toggle -->
+      <header class="text-center mb-8 relative">
+        <!-- Dark Mode Toggle Button - NO inline onclick -->
+        <button
+          id="darkModeToggle"
+          class="absolute top-0 right-0 p-3 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300"
+        >
+          <i id="sunIcon" class="fas fa-sun text-yellow-500 text-xl hidden"></i>
+          <i
+            id="moonIcon"
+            class="fas fa-moon text-gray-700 dark:text-gray-300 text-xl"
+          ></i>
+        </button>
+
+        <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-2">
+          <i class="fas fa-envelope-open-text text-blue-500"></i>
+          TempMail
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400">
+          Disposable temporary email - protect your real inbox from spam
+        </p>
+      </header>
+
+      <!-- Main Card -->
+      <div
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 transition-colors duration-300"
+      >
+        <!-- Email Display Section -->
+        <div class="mb-6">
+          <label
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
+            Your temporary email address
+          </label>
+          <div class="flex flex-wrap gap-2">
+            <input
+              type="text"
+              id="email-address"
+              readonly
+              class="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 font-mono text-sm text-gray-900 dark:text-gray-100"
+              placeholder="Generating..."
+            />
+            <button
+              id="copyButton"
+              class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center gap-2"
+            >
+              <i class="far fa-copy"></i>
+              Copy
+            </button>
+            <button
+              id="newButton"
+              class="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center gap-2"
+            >
+              <i class="fas fa-sync-alt"></i>
+              New
+            </button>
+            <button
+              id="getTokenButton"
+              class="px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition flex items-center gap-2"
+            >
+              <i class="fas fa-ticket-alt"></i>
+              Get Token
+            </button>
+            <button
+              id="recoverButton"
+              class="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition flex items-center gap-2"
+            >
+              <i class="fas fa-key"></i>
+              Recover
+            </button>
+            <button
+              id="secureWipeButton"
+              class="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center gap-2"
+            >
+              <i class="fas fa-broom"></i>
+              Secure Wipe
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <i class="fas fa-info-circle"></i>
+            This address will work for as long as you keep this tab open. Close
+            tab = email deleted.
+          </p>
+        </div>
+
+        <!-- Privacy Notice -->
+        <div id="privacy-notice-container" class="mb-6"></div>
+
+        <!-- Inbox Controls -->
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-white">
+            <i class="fas fa-inbox text-blue-500"></i>
+            Inbox
+          </h2>
+          <button
+            id="refreshButton"
+            class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition flex items-center gap-2"
+          >
+            <i class="fas fa-sync-alt" id="refresh-icon"></i>
+            Refresh
+          </button>
+        </div>
+
+        <!-- Inbox Loading State -->
+        <div id="inbox-loading" class="text-center py-12 hidden">
+          <i
+            class="fas fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"
+          ></i>
+          <p class="text-gray-600 dark:text-gray-400">
+            Checking for new emails...
+          </p>
+        </div>
+
+        <!-- Inbox Empty State -->
+        <div
+          id="inbox-empty"
+          class="text-center py-12 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg"
+        >
+          <i
+            class="far fa-envelope-open text-6xl text-gray-400 dark:text-gray-600 mb-4"
+          ></i>
+          <p class="text-gray-500 dark:text-gray-400 text-lg">No emails yet</p>
+          <p class="text-gray-400 dark:text-gray-500 text-sm">
+            Emails will appear here automatically
+          </p>
+        </div>
+
+        <!-- Inbox List -->
+        <div id="inbox-list" class="space-y-3 hidden email-content"></div>
+
+        <!-- Email Detail View -->
+        <div
+          id="email-detail"
+          class="hidden mt-6 border-t dark:border-gray-700 pt-6"
+        >
+          <button
+            id="backToInboxButton"
+            class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mb-4 flex items-center gap-2"
+          >
+            <i class="fas fa-arrow-left"></i>
+            Back to inbox
+          </button>
+          <div
+            id="email-content"
+            class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg text-gray-900 dark:text-gray-100"
+          >
+            <!-- Email content will be loaded here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="text-center text-gray-500 dark:text-gray-400 text-sm">
+        
+          <i class="fas fa-shield-alt"></i>
+          No registration required • Auto-delete on tab close
+        </p>
+      </footer>
+    </div>
+
+    <!-- Script -->
+    <script src="script.js"></script>
+  </body>
+</html>
